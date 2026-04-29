@@ -25,18 +25,22 @@ const DEFAULT_CONFIGS: Record<ProjectTypeWithPreference, object> = {
   pairwise_review: { rating_labels:[{value:"A is better than B",hotkey:"1"},{value:"B is better than A",hotkey:"2"},{value:"Both are equal",hotkey:"3"},{value:"Need expert",hotkey:"4"},{value:"Prompt has issue",hotkey:"5"}], instructions:"Compare responses." },
   freeform: { instructions:"Write notes." },
   custom: { rating_labels:[{value:"Option A",hotkey:"1"},{value:"Option B",hotkey:"2"}], instructions:"Annotate the data." },
-};
+} as Record<ProjectTypeWithPreference, object>;
+
 
 const TYPE_ICONS: Record<ProjectTypeWithPreference, string> = {
   safety:"🛡️", qa_review:"✅", pairwise_review:"⚖️", text_classification:"🏷️",
   ner:"🔍", image_classification:"🖼️", bounding_box:"📦", audio_transcription:"🎵", freeform:"✏️",
+  custom:"⚙️",
 };
 
 const TYPE_DESC: Record<ProjectTypeWithPreference, string> = {
   safety:"Safe / Not Safe", qa_review:"Rate answers", pairwise_review:"Compare responses",
   text_classification:"Classify text", ner:"Named entities", image_classification:"Classify images",
-  bounding_box:"Draw boxes", audio_transcription:"Transcribe audio", freeform:"Free notes", custom:"Custom labels",
-};
+  bounding_box:"Draw boxes", audio_transcription:"Transcribe audio", freeform:"Free notes",
+  custom:"Custom labels",
+} as Record<ProjectTypeWithPreference, string>;
+
 
 const STEPS = [
   { id: 1, label: "Basic Info",    desc: "Name & priority" },

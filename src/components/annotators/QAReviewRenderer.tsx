@@ -130,20 +130,27 @@ export function QAReviewRenderer({ data, config, result, onChange }: Props) {
         </div>
 
         {(() => {
-          // System fields to skip (shown in header or not relevant)
-          const SKIP_FIELDS = new Set(["id","task_id","external_id","risk","risk_category","domain","category","language","lang","locale","annotators","context"]);
+          // System fields to always skip (shown in header)
+          const SKIP_FIELDS = new Set(["annotators"]);
 
-          // If config defines display_fields, use those; otherwise show all data fields
-          const configFields: string[] | undefined = (config as any).display_fields;
+          const configFields: string[] | undefined = (config as any).display_fields?.length > 0
+            ? (config as any).display_fields
+            : undefined;
 
-          const dataEntries = Object.entries(taskData).filter(([key]) => !SKIP_FIELDS.has(key) && key !== "annotators");
+          let fieldsToShow: [string, any][];
 
-          const fieldsToShow: [string, any][] = configFields && configFields.length > 0
-            ? (configFields.map(f => [f, taskData[f]] as [string, any]).filter(([, v]) => v !== undefined && v !== null && v !== ""))
-            : dataEntries;
+          if (configFields) {
+            // Exact fields specified by manager — show only those, in that order
+            fieldsToShow = configFields
+              .map(f => [f, taskData[f]] as [string, any])
+              .filter(([, v]) => v !== undefined && v !== null);
+          } else {
+            // Show all fields except system ones
+            const systemSkip = new Set(["id","task_id","external_id","risk","risk_category","domain","category","language","lang","locale","annotators","context"]);
+            fieldsToShow = Object.entries(taskData).filter(([key]) => !systemSkip.has(key));
+          }
 
           if (fieldsToShow.length === 0) {
-            // fallback to prompt/answer
             return (
               <>
                 {prompt && <div><div className="label-title">Prompt</div><div className="task-text">{prompt}</div></div>}
@@ -160,7 +167,11 @@ export function QAReviewRenderer({ data, config, result, onChange }: Props) {
                     {key.replace(/_/g, " ")}
                   </div>
                   <div className="task-text">
-                    {typeof value === "object" ? JSON.stringify(value, null, 2) : String(value ?? "")}
+                    {Array.isArray(value)
+                      ? value.join(", ")
+                      : typeof value === "object" && value !== null
+                      ? JSON.stringify(value, null, 2)
+                      : String(value ?? "")}
                   </div>
                 </div>
               ))}

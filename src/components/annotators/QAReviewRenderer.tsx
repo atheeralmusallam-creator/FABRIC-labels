@@ -139,7 +139,7 @@ export function QAReviewRenderer({ data, config, result, onChange }: Props) {
           const dataEntries = Object.entries(taskData).filter(([key]) => !SKIP_FIELDS.has(key) && key !== "annotators");
 
           const fieldsToShow: [string, any][] = configFields && configFields.length > 0
-            ? configFields.map(f => [f, taskData[f]]).filter(([, v]) => v !== undefined && v !== null && v !== "")
+            ? (configFields.map(f => [f, taskData[f]] as [string, any]).filter(([, v]) => v !== undefined && v !== null && v !== ""))
             : dataEntries;
 
           if (fieldsToShow.length === 0) {

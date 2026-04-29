@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ProjectType } from "@/types";
 import { getProjectTypeLabel, getProjectTypeIcon } from "@/lib/utils";
 
-type ProjectTypeWithPreference = ProjectType | "pairwise_review";
+type ProjectTypeWithPreference = ProjectType | "pairwise_review" | "custom";
 
 const PROJECT_TYPES: ProjectTypeWithPreference[] = [
   "safety","qa_review","pairwise_review","text_classification",

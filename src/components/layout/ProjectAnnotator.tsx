@@ -421,38 +421,65 @@ export function ProjectAnnotator({
           {currentTask ? (
             <>
               <div className="flex-1 overflow-y-auto p-5">
-                {currentTask.annotations?.length > 0 && (
-                  <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-[var(--text-secondary)] mr-1">Annotator:</span>
+                {currentTask.annotations?.length > 0 && (() => {
+                  // Check for disagreement among submitted annotations
+                  const submitted = currentTask.annotations.filter((a: any) => a.status === "SUBMITTED");
+                  const values = submitted.map((a: any) => a.result?.evaluation || a.result?.rating || a.result?.label || "");
+                  const uniqueValues = new Set(values.filter(Boolean));
+                  const hasDisagreement = submitted.length >= 3 && uniqueValues.size > 1;
 
-                    {currentTask.annotations.map((ann: any) => {
-                      const name = ann.user?.name || ann.user?.email || "Unknown";
-                      const active = currentAnnotation?.id === ann.id;
+                  return (
+                    <div className="mb-4">
+                      {/* Disagreement warning for manager/admin */}
+                      {isManagerOrAdmin && hasDisagreement && (
+                        <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium"
+                          style={{ background: "rgba(234,179,8,0.12)", border: "1px solid rgba(234,179,8,0.35)", color: "#ca8a04" }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                          </svg>
+                          Disagreement detected — a 4th annotator has been auto-assigned
+                        </div>
+                      )}
 
-                      return (
-                        <button
-                          key={ann.id}
-                          type="button"
-                          onClick={() => setSelectedAnnotationId(ann.id)}
-                          className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
-                            active
-                              ? "bg-emerald-500/20 border-emerald-500"
-                              : "bg-[var(--bg-surface)] border-[var(--border)] hover:border-emerald-500/50"
-                          }`}
-                          style={{ color: active ? "var(--brand)" : "var(--text-primary)" }}
-                        >
-                          {name}
-                          <span
-                            className="ml-2 text-[10px]"
-                            style={{ color: "var(--text-primary)", fontWeight: active ? 700 : 500, opacity: active ? 1 : 0.75 }}
-                          >
-                            {ann.status}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs mr-1" style={{ color: "var(--text-secondary)" }}>Annotator:</span>
+                        {currentTask.annotations.map((ann: any) => {
+                          const name = ann.user?.name || ann.user?.email || "Unknown";
+                          const active = currentAnnotation?.id === ann.id;
+                          const val = ann.result?.evaluation || ann.result?.rating || ann.result?.label || "";
+
+                          return (
+                            <button
+                              key={ann.id}
+                              type="button"
+                              onClick={() => setSelectedAnnotationId(ann.id)}
+                              className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
+                                active
+                                  ? "bg-emerald-500/20 border-emerald-500"
+                                  : "bg-[var(--bg-surface)] border-[var(--border)] hover:border-emerald-500/50"
+                              }`}
+                              style={{ color: active ? "var(--brand)" : "var(--text-primary)" }}
+                            >
+                              {name}
+                              {isManagerOrAdmin && val && (
+                                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded"
+                                  style={{ background: "var(--bg-hover)", color: "var(--text-primary)", fontWeight: 600 }}>
+                                  {val}
+                                </span>
+                              )}
+                              <span
+                                className="ml-1.5 text-[10px]"
+                                style={{ color: "var(--text-primary)", fontWeight: active ? 700 : 500, opacity: active ? 1 : 0.7 }}
+                              >
+                                {ann.status}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <RendererRouter
                   project={project as any}

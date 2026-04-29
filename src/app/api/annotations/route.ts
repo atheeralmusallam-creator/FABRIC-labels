@@ -48,8 +48,6 @@ async function maybeAssignAdjudicator(taskId: string, projectId: string) {
 
   const config = task.project.config as any;
 
-  if (!config?.adjudication_enabled) return;
-
   const submitted = task.annotations.filter((a) => a.userId);
 
   if (submitted.length !== 3) return;

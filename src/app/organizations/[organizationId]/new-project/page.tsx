@@ -11,7 +11,7 @@ type ProjectTypeWithPreference = ProjectType | "pairwise_review";
 
 const PROJECT_TYPES: ProjectTypeWithPreference[] = [
   "safety","qa_review","pairwise_review","text_classification",
-  "ner","image_classification","bounding_box","audio_transcription","freeform",
+  "ner","image_classification","bounding_box","audio_transcription","freeform","custom",
 ];
 
 const DEFAULT_CONFIGS: Record<ProjectTypeWithPreference, object> = {
@@ -24,6 +24,7 @@ const DEFAULT_CONFIGS: Record<ProjectTypeWithPreference, object> = {
   safety: { rating_labels:[{value:"Safe",hotkey:"1"},{value:"Not Safe",hotkey:"2"},{value:"tool_call",hotkey:"3"}], instructions:"Review the answer for safety." },
   pairwise_review: { rating_labels:[{value:"A is better than B",hotkey:"1"},{value:"B is better than A",hotkey:"2"},{value:"Both are equal",hotkey:"3"},{value:"Need expert",hotkey:"4"},{value:"Prompt has issue",hotkey:"5"}], instructions:"Compare responses." },
   freeform: { instructions:"Write notes." },
+  custom: { rating_labels:[{value:"Option A",hotkey:"1"},{value:"Option B",hotkey:"2"}], instructions:"Annotate the data." },
 };
 
 const TYPE_ICONS: Record<ProjectTypeWithPreference, string> = {
@@ -34,7 +35,7 @@ const TYPE_ICONS: Record<ProjectTypeWithPreference, string> = {
 const TYPE_DESC: Record<ProjectTypeWithPreference, string> = {
   safety:"Safe / Not Safe", qa_review:"Rate answers", pairwise_review:"Compare responses",
   text_classification:"Classify text", ner:"Named entities", image_classification:"Classify images",
-  bounding_box:"Draw boxes", audio_transcription:"Transcribe audio", freeform:"Free notes",
+  bounding_box:"Draw boxes", audio_transcription:"Transcribe audio", freeform:"Free notes", custom:"Custom labels",
 };
 
 const STEPS = [
@@ -62,6 +63,14 @@ export default function NewProjectPage({ params }: { params: { organizationId: s
 
   // Step 3
   const [adjudicationEnabled, setAdjudicationEnabled] = useState(false);
+
+  // Custom type builder
+  const [customTypeName, setCustomTypeName] = useState("");
+  const [customLabels, setCustomLabels] = useState([
+    { value: "Option A", hotkey: "1" },
+    { value: "Option B", hotkey: "2" },
+  ]);
+  const [customInstructions, setCustomInstructions] = useState("");
 
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState("");
@@ -94,8 +103,15 @@ export default function NewProjectPage({ params }: { params: { organizationId: s
         body: JSON.stringify({
           name, description,
           priority: priority || null,
-          type,
-          config: { ...DEFAULT_CONFIGS[type], adjudication_enabled: adjudicationEnabled },
+          type: type === "custom" ? "safety" : type, // custom uses safety renderer
+          config: type === "custom"
+            ? {
+                custom_type_name: customTypeName || "Custom",
+                rating_labels: customLabels.filter(l => l.value.trim()),
+                instructions: customInstructions || "Annotate the data.",
+                adjudication_enabled: adjudicationEnabled,
+              }
+            : { ...DEFAULT_CONFIGS[type!], adjudication_enabled: adjudicationEnabled },
           organizationId: params.organizationId,
         }),
       });
@@ -299,6 +315,83 @@ export default function NewProjectPage({ params }: { params: { organizationId: s
                   </span>
                 </div>
               </div>
+
+              {/* Custom type builder */}
+              {type === "custom" && (
+                <div className="rounded-xl border p-4 space-y-4" style={{ background: "var(--bg-surface)", borderColor: "var(--brand)" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>⚙️ Custom Task Type</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(99,102,241,0.15)", color: "var(--brand)" }}>New</span>
+                  </div>
+
+                  {/* Task type name */}
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Task Type Name</label>
+                    <input
+                      value={customTypeName}
+                      onChange={e => setCustomTypeName(e.target.value)}
+                      placeholder="e.g. Relevance Review, Factuality Check..."
+                      className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                      style={{ background: "var(--bg-primary)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                    />
+                  </div>
+
+                  {/* Labels builder */}
+                  <div>
+                    <label className="block text-xs font-medium mb-2" style={{ color: "var(--text-secondary)" }}>
+                      Rating Labels
+                      <span className="ml-1 font-normal" style={{ color: "var(--text-muted)" }}>(annotators will pick one)</span>
+                    </label>
+                    <div className="space-y-2">
+                      {customLabels.map((label, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="text-xs w-5 text-center font-mono" style={{ color: "var(--text-muted)" }}>{idx + 1}</span>
+                          <input
+                            value={label.value}
+                            onChange={e => {
+                              const updated = [...customLabels];
+                              updated[idx] = { ...updated[idx], value: e.target.value };
+                              setCustomLabels(updated);
+                            }}
+                            placeholder={`Label ${idx + 1}`}
+                            className="flex-1 px-3 py-1.5 rounded-lg border text-sm outline-none"
+                            style={{ background: "var(--bg-primary)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                          />
+                          {customLabels.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => setCustomLabels(customLabels.filter((_, i) => i !== idx))}
+                              className="text-xs px-2 py-1.5 rounded-lg"
+                              style={{ background: "rgba(239,68,68,0.1)", color: "#f87171" }}
+                            >✕</button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {customLabels.length < 8 && (
+                      <button
+                        type="button"
+                        onClick={() => setCustomLabels([...customLabels, { value: "", hotkey: String(customLabels.length + 1) }])}
+                        className="mt-2 text-xs px-3 py-1.5 rounded-lg border transition-all"
+                        style={{ borderColor: "var(--border)", color: "var(--text-secondary)", background: "var(--bg-primary)" }}
+                      >+ Add Label</button>
+                    )}
+                  </div>
+
+                  {/* Instructions */}
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Instructions for Annotators</label>
+                    <textarea
+                      value={customInstructions}
+                      onChange={e => setCustomInstructions(e.target.value)}
+                      placeholder="Describe how annotators should evaluate each item..."
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg border text-sm outline-none resize-none"
+                      style={{ background: "var(--bg-primary)", borderColor: "var(--border)", color: "var(--text-primary)" }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Adjudication toggle */}
               <label

@@ -97,9 +97,13 @@ export function ProjectAnnotator({
   const currentUserAnnotation =
     currentTask?.annotations?.find((ann: any) => ann.userId === currentUserId) || null;
 
+  // Managers/admins: respect selectedAnnotationId so they can view any annotator's result
   const selectedAnnotation =
+    (selectedAnnotationId
+      ? currentTask?.annotations?.find((ann: any) => ann.id === selectedAnnotationId)
+      : null) ||
     currentUserAnnotation ||
-    currentTask?.annotations?.find((ann: any) => ann.id === selectedAnnotationId) ||
+    currentTask?.annotations?.[0] ||
     null;
 
   const currentAnnotation = selectedAnnotation;
@@ -157,7 +161,7 @@ export function ProjectAnnotator({
     // Block autosave on every task switch — unblocks after first real interaction
     loadGuard.current.taskId = currentTask?.id ?? null;
     loadGuard.current.skipNextAutosave = true;
-  }, [currentTask?.id]);
+  }, [currentTask?.id, selectedAnnotationId]);
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });

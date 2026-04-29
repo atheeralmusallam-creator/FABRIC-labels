@@ -439,12 +439,12 @@ export function ProjectAnnotator({
                               ? "bg-emerald-500/20 border-emerald-500"
                               : "bg-[var(--bg-surface)] border-[var(--border)] hover:border-emerald-500/50"
                           }`}
-                          style={{ color: active ? "var(--brand)" : "var(--text-secondary)" }}
+                          style={{ color: active ? "var(--brand)" : "var(--text-primary)" }}
                         >
                           {name}
                           <span
                             className="ml-2 text-[10px]"
-                            style={{ color: active ? "var(--text-primary)" : "var(--text-muted)", fontWeight: active ? 600 : 400 }}
+                            style={{ color: "var(--text-primary)", fontWeight: active ? 700 : 500, opacity: active ? 1 : 0.75 }}
                           >
                             {ann.status}
                           </span>

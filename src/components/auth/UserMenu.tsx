@@ -1,14 +1,13 @@
-import { redirect } from "next/navigation";
-import { clearSession } from "@/lib/auth";
+"use client";
+
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
-async function logoutAction() {
-  "use server";
-  clearSession();
-  redirect("/login");
-}
-
 export function UserMenu({ user }: { user: { name: string | null; email: string; role: string } }) {
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  };
+
   return (
     <div className="flex items-center gap-3 text-sm">
       <ThemeToggle />
@@ -16,9 +15,13 @@ export function UserMenu({ user }: { user: { name: string | null; email: string;
         <div className="font-medium" style={{ color: "var(--text-primary)" }}>{user.name || user.email}</div>
         <div className="text-xs" style={{ color: "var(--text-muted)" }}>{user.role.toLowerCase()}</div>
       </div>
-      <form action={logoutAction}>
-        <button className="transition-colors" style={{ color: "var(--text-secondary)" }}>Logout</button>
-      </form>
+      <button
+        onClick={handleLogout}
+        className="transition-colors"
+        style={{ color: "var(--text-secondary)" }}
+      >
+        Logout
+      </button>
     </div>
   );
 }
